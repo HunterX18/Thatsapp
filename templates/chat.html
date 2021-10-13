@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Thatsapp</title>
+		<!--Link to CSS -->
+		<link href="../static/bootstrap.min.css" rel="stylesheet" />
+		<link href="../static/style.css" rel="stylesheet" />
+	</head>
+
+	<body class="text-center">
+		<div class="chatwindow">
+			<h2>Thatsapp</h2>
+			<h2>Room: {{session['room']}}</h2>
+			<br />
+			<ul
+				id="Chat"
+				style="
+					background: snow;
+					list-style: none;
+					height: 40vh;
+					width: 50vw;
+					overflow-wrap: break-word;
+					overflow-y: auto;
+					padding-left: 10rem;
+					padding-right: 10rem;
+					border-radius: 10px;
+				"
+			></ul>
+			<br /><br />
+			<span>
+				<input
+					type="text"
+					id="text"
+					size="60"
+					placeholder="Enter your message here"
+				/>
+				<button type="button" id="send" class="btn btn-success">send</button>
+			</span>
+			<br />
+			<button type="button" class="btn btn-danger" onclick="leave_room()">
+				leave room
+			</button>
+		</div>
+	</body>
+	<script
+		src="https://cdn.socket.io/4.2.0/socket.io.min.js"
+		integrity="sha384-PiBR5S00EtOj2Lto9Uu81cmoyZqR57XcOna1oAuVuIEjzj0wpqDVfD0JA9eXlRsj"
+		crossorigin="anonymous"
+	></script>
+	<script>
+		const socket = io.connect("http://localhost:5000/chat");
+		socket.on("connect", function () {
+			socket.emit("join");
+		});
+		socket.on("status", (data) => {
+			const Chat = document.getElementById("Chat");
+			const mssg = document.createElement("li");
+			mssg.style.background = "#4FFFB0";
+			mssg.style.borderRadius = "10px";
+			mssg.style.marginBottom = "10px";
+			mssg.innerText = `<${data.msg}>\n`;
+			Chat.appendChild(mssg);
+
+			Chat.scrollTop = Chat.scrollHeight - Chat.clientHeight;
+		});
+		socket.on("message", (data) => {
+			const Chat = document.getElementById("Chat");
+			const mssg = document.createElement("li");
+			mssg.style.background = "#4FFFB0";
+			mssg.style.borderRadius = "10px";
+			mssg.style.marginBottom = "10px";
+			mssg.innerText = `${data.msg}\n`;
+			Chat.appendChild(mssg);
+			Chat.scrollTop = Chat.scrollHeight - Chat.clientHeight;
+		});
+		const send = document.getElementById("send");
+		send.addEventListener("click", (e) => {
+			const text = document.getElementById("text");
+			const message = text.value;
+			text.value = "";
+			socket.emit("text", { msg: message });
+		});
+		function leave_room() {
+			socket.emit("left", {}, function () {
+				socket.disconnect();
+				window.location.href = "{{ url_for('index') }}";
+			});
+		}
+	</script>
+</html>
